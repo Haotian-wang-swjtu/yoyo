@@ -27,6 +27,20 @@
  > 还未添加
  > 大体的项目组件的结构
  
+ ```flow
+st=>start: 开始
+op=>operation: SEA board
+cond=>operation: Arduino IDE
+io=>operation: AWS IOT
+wi=>operation: Wifi
+yun=>operation:IoT Core
+e=>end:检测
+st->op->cond->io->yun->e
+wi->io
+op(数据)->cond
+cond(上传)->io
+io(储存)->yun
+&```
  
  ---
  
