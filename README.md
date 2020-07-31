@@ -1,4 +1,5 @@
 # yoyo 
+
  > This is a summer school internship.
  >  2020年新工科联盟-Xilinx 暑期学校（Summer School）项目 
  
@@ -21,12 +22,16 @@
  简介：本项目是一个基于“FPGA”的连接云项目，通过Arduino串口将板载陀螺仪读取的数据，然后上传到AWS IOT平台。板子首先成功的读取到板载陀螺仪采集的数值，然后将其通过type—C串口连接到电脑，通过Arduino的串口监视器，可以成功的看到产品的数据输入;然后通过连接设定的wifi，连接到对应的AWS IoT，并成功的在主题模块看到相对应的数据；后续进行过与网页端结合的想法，但由于时间问题并没有进行完成。
  
  
- #####项目框图
  
- 
+ ##### 项目框图
+ > 还未添加
  > 大体的项目组件的结构
  
- #####项目内容
+ 
+ 
+ ##### 项目内容
+ 
+ 
  - 板载陀螺仪采集状态数据，得到两个"Temperature data"，六个"Gyroscope data"，六个"Magnetometer data"，共14个数据。
  - 板子将采集的数据通过"Type—C"传输到电脑的Arduino串口。
  - Arduino连接"SEA board"，"Wifi"，"AWS"。
@@ -35,6 +40,8 @@
  
  
  ### change log
+ 
+ 
  ##### v.10.15
   - 解决了数据无法正确采集的问题。
   - 更新了上传云端的结构。
