@@ -31,7 +31,7 @@ English|[中文](https://github.com/Haotian-wang-swjtu/yoyo/blob/master/README.m
  > The overall structure of the project components
  
 ![Diagram of the project](框图.png)
-
+![Block diagram of thinking](思维框图.png)
 
 
 ---
