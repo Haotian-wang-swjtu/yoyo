@@ -1,5 +1,5 @@
 # yoyo 
-English|[中文]（https://github.com/Haotian-wang-swjtu/yoyo/blob/master/README.md）
+English|[中文](https://github.com/Haotian-wang-swjtu/yoyo/blob/master/README.md)
  > This is a summer school internship.
  > 
  > 2020 New Engineering Alliance -Xilinx Summer School Project
