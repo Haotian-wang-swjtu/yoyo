@@ -26,11 +26,11 @@ English|[中文](https://github.com/Haotian-wang-swjtu/yoyo/blob/master/README.m
  ---
  
  ##### Diagram of the project
- > Haven't add
- > 
+ 
+ 
  > The overall structure of the project components
  
-
+![Diagram of the project](框图.png)
 
 
 
