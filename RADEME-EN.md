@@ -31,6 +31,9 @@ English|[中文](https://github.com/Haotian-wang-swjtu/yoyo/blob/master/README.m
  > The overall structure of the project components
  
 ![Diagram of the project](框图.png)
+
+
+
 ![Block diagram of thinking](思维框图.png)
 
 
@@ -46,7 +49,10 @@ English|[中文](https://github.com/Haotian-wang-swjtu/yoyo/blob/master/README.m
  - The Arduino connects to 'AWS IoT' through the network and transfers the uploaded data to IoT cloud disk。
  - Using 'AWS' cloud 'test' to successfully see the returned data。
  
-  ![count](计数.gif)
+ ![count](计数.gif)
+  
+  
+  
  ![Data is read](Gyro_一个小队)
  
  ---
