@@ -1,0 +1,261 @@
+
+ #include "sea_esp32_qspi.h"
+#include "SimpleDHT.h"
+#include "string.h"
+
+#include "AWS_IOT.h"
+#include "WiFi.h"
+
+AWS_IOT hornbill;
+
+char WIFI_SSID[]="shaikh";
+char WIFI_PASSWORD[]="n05m0k10";  
+char HOST_ADDRESS[]="a2jtj1ge4hi39d-ats.iot.us-east-1.amazonaws.com";
+char CLIENT_ID[]= "ESP32client";
+char TOPIC_NAME[]= "$aws/things/esp32_thing/shadow/update";
+
+const char aws_root_ca_pem[]="-----BEGIN CERTIFICATE-----\n\
+MIIDQTCCAimgAwIBAgITBmyfz5m/jAo54vB4ikPmljZbyjANBgkqhkiG9w0BAQsF\
+ADA5MQswCQYDVQQGEwJVUzEPMA0GA1UEChMGQW1hem9uMRkwFwYDVQQDExBBbWF6\
+b24gUm9vdCBDQSAxMB4XDTE1MDUyNjAwMDAwMFoXDTM4MDExNzAwMDAwMFowOTEL\
+MAkGA1UEBhMCVVMxDzANBgNVBAoTBkFtYXpvbjEZMBcGA1UEAxMQQW1hem9uIFJv\
+b3QgQ0EgMTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALJ4gHHKeNXj\
+ca9HgFB0fW7Y14h29Jlo91ghYPl0hAEvrAIthtOgQ3pOsqTQNroBvo3bSMgHFzZM\
+9O6II8c+6zf1tRn4SWiw3te5djgdYZ6k/oI2peVKVuRF4fn9tBb6dNqcmzU5L/qw\
+IFAGbHrQgLKm+a/sRxmPUDgH3KKHOVj4utWp+UhnMJbulHheb4mjUcAwhmahRWa6\
+VOujw5H5SNz/0egwLX0tdHA114gk957EWW67c4cX8jJGKLhD+rcdqsq08p8kDi1L\
+93FcXmn/6pUCyziKrlA4b9v7LWIbxcceVOF34GfID5yHI9Y/QCB/IIDEgEw+OyQm\
+jgSubJrIqg0CAwEAAaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC\
+AYYwHQYDVR0OBBYEFIQYzIU07LwMlJQuCFmcx7IQTgoIMA0GCSqGSIb3DQEBCwUA\
+A4IBAQCY8jdaQZChGsV2USggNiMOruYou6r4lK5IpDB/G/wkjUu0yKGX9rbxenDI\
+U5PMCCjjmCXPI6T53iHTfIUJrU6adTrCC2qJeHZERxhlbI1Bjjt/msv0tadQ1wUs\
+N+gDS63pYaACbvXy8MWy7Vu33PqUXHeeE6V/Uq2V8viTO96LXFvKWlJbYK8U90vv\
+o/ufQJVtMVT8QtPHRh8jrdkPSHCa2XV4cdFyQzR1bldZwgJcJmApzyMZFo6IQ6XU\
+5MsI+yMRQ+hDKXJioaldXgjUkK642M4UwtBV8ob2xJNDd2ZhwLnoQdeXeGADbkpy\
+rqXRfboQnoZsG4q5WTP468SQvvG5\
+-----END CERTIFICATE-----\n";
+
+const char certificate_pem_crt[]="-----BEGIN CERTIFICATE-----\n\
+MIIDWjCCAkKgAwIBAgIVAOq9H18322vxsTAPy+1GTCW20H5yMA0GCSqGSIb3DQEB\
+CwUAME0xSzBJBgNVBAsMQkFtYXpvbiBXZWIgU2VydmljZXMgTz1BbWF6b24uY29t\
+IEluYy4gTD1TZWF0dGxlIFNUPVdhc2hpbmd0b24gQz1VUzAeFw0yMDA3MjkwNzMw\
+MDhaFw00OTEyMzEyMzU5NTlaMB4xHDAaBgNVBAMME0FXUyBJb1QgQ2VydGlmaWNh\
+dGUwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDIiLgj6dXnPiJRgu4I\
+ldMVGbwnXKbev+kcobpid8i94LjSQazuSPFJ7Z9g2ewOTONrbcGWn5Q4vfnE0zw0\
+16wN6nWJrnvXrlR1cnYZlzAohMFtpd/Bjc7Eo/9TJufuGwAa+u/3rUM/Lt/ToBEj\
+3Gvp2xj1uFAgPL/XH0EsvCmHJU2aantz2Guys6XLyoYxYtoe9r8OihrC7bFUrn/e\
+oz4Cg6sBIUhqLIA5KR3zkTuf7Jl0Z3eqEAribVMXqLueOhG9d73xkTtliOT/bNwU\
+n+SNX2u16sfqQLsbm6lTJqtgkpfTofX6YSquNxXMWycJT5wmYQAe3zbxY5nPwfp8\
+rXWtAgMBAAGjYDBeMB8GA1UdIwQYMBaAFKB6BPuCMYp92fwxQBKR376M3z4TMB0G\
+A1UdDgQWBBR8mCCxWUdmnvi8u2fQnkgwUqfLnTAMBgNVHRMBAf8EAjAAMA4GA1Ud\
+DwEB/wQEAwIHgDANBgkqhkiG9w0BAQsFAAOCAQEAHo0fqGvqQjH3hvqz4vrr8pmA\
+jd34p9wHg86vJMP7AjDKAB3YzLTCDTVUmDgj/qqfnP0O0/OCxiEL5haNAsxdFciF\
+VbDaKed9XYXd+vRDQwrqyDxvoTqMBOmQTgeaJSVrXFJjwNDK6ajQ+dLJWt1/hArb\
+X3OpWnk+kBBuhY86+DWJJhhSvuKcsNXDLp22iTWe/vltCNiJvORyoB2UV8MoNSZv\
+cwt0dbxmm/WPWKFR52o1j9fFleaQKfvn0aW0S3IHHjUUYahJxIGBv3PyGmO7z2q7\
+IWobFLJ6EDDq2SsgGCw6q3+PbNfBeCWDdCKdvswAPBBajHU+uNHX5gQhbxnS6g==\
+-----END CERTIFICATE-----\n";
+
+const char private_pem_key[]="-----BEGIN RSA PRIVATE KEY-----\n\
+MIIEowIBAAKCAQEAyIi4I+nV5z4iUYLuCJXTFRm8J1ym3r/pHKG6YnfIveC40kGs\
+7kjxSe2fYNnsDkzja23Blp+UOL35xNM8NNesDep1ia57165UdXJ2GZcwKITBbaXf\
+wY3OxKP/Uybn7hsAGvrv961DPy7f06ARI9xr6dsY9bhQIDy/1x9BLLwphyVNmmp7\
+c9hrsrOly8qGMWLaHva/Dooawu2xVK5/3qM+AoOrASFIaiyAOSkd85E7n+yZdGd3\
+qhAK4m1TF6i7njoRvXe98ZE7ZYjk/2zcFJ/kjV9rterH6kC7G5upUyarYJKX06H1\
++mEqrjcVzFsnCU+cJmEAHt828WOZz8H6fK11rQIDAQABAoIBAALKZEWbq25cXv3j\
+ZIyaCSXyBbxGfcv7v7K2TXGxWQnLZscGQvHN8g2lUOJ4JeDNER0dmeQOtHFVs3QZ\
+vGy/05Ud/iS8WNzXgDViMmKIyBLIRijQdhyrbIUwAw2VLQUTOx0lANHhh14JuPOo\
+9pQZLSdD9UT2G6dXMRQ9SxrkQ2+t/ufvem6JA4RU3PM925RYLx42tnoPiCGv4ME2\
+VyN1tzLpjq1Q3xdrJGKB/GLyMb6Csz+sa5eAHVGJyxo8DFvXSJiRfS2bH4EYY76Z\
+LjguHlH8eELIwa+GVguN6rnmLwF+caM0fvcmpJIen+RhDoXMh7bhOOgW213EFDgS\
+xo7RLgECgYEA5fFZ2YpkO7CXOMxOppHJfgF0QwpS9FiW/BHJofQbwAX+hfBw8cjo\
+Fwe4X69nORt7rfJemuY2XEGtpLIRTZ2stp7FOt0bDf/74scuoSCglunyPFupuXzt\
+GC0yh/CNTAqThZPGIq4aSGL/xflqt7l0Tz6NxdQ1wjSL+AlGXJVhofUCgYEA30I4\
+Y5elA9dWc7SXJt1recIMZVfctcrlvfAPb2AvKrjwfPXeQlaI9RS0bAotLztVeo+Z\
+6SNfEPiTtj+niznqbSBbkM7DVuEW4NHO18OfKa3fFJ1WQf9JFyws+0LntwFg/9JY\
++HMfqfB+m1TrIQlivDqmYBlTJxbSlWG2YxIJWdkCgYEAoLJ4cZDHFfQG6xnViZFv\
+OJF5l/SaHsve0ND5kiaQUjWeOCreNAuNL7MkhjKGOCHd4KX2udhTe0wnN2d+sjiU\
+YJg7DDVD2BfjCAzdqJutv2pF8Sq6Rbhp1jCYFOrnRJJLoNmyacA0/Au75ra1fyqr\
+f0ofOHdjDpM8kp6gvsljDxUCgYBOu8O3G5uOJzrNwzoq8pscbVqBwuKLGeq7eRV4\
+aas4nc/xwaOIMYxLIeoez9fveDVE66+TkG3ORluRQhGL//i0U1z3THOHCApRbqxL\
+WymeQTsSwgnRbH4SNfoHAilFWK8kiMHnnHHmNHHxxZjGJdE0IFrcORIiDuJk2/i+\
+J3Y0wQKBgGotvo3TB4xKAlh1/uSCNt4wTXLZLz+8nLZ3XLhwZA/DwCE+VFn7S4fZ\
+ZVHBlKAGyIOZ94W1vM3/+vMqZ/M4V7o3wqSmO6kt4bYu291pVskB1KggDx6A47cv\
+BDGXqEQj55nmvpukVKnMMwl02SVEOsE/3v5UgmvxMN8dNJByeEUF\
+-----END RSA PRIVATE KEY-----\n";
+
+
+
+
+ int16_t *y;
+ int16_t x=0;
+int status = WL_IDLE_STATUS;
+int tick=0,msgCount=0,msgReceived = 0,tick1=0;
+char payload[512];
+char rcvdPayload[512];
+uint8_t data1[4] = {41,42,43,44};
+uint8_t data2[32];
+void mySubCallBackHandler (char *topicName, int payloadLen, char *payLoad)
+{
+    strncpy(rcvdPayload,payLoad,payloadLen);
+    rcvdPayload[payloadLen] = 0;
+    msgReceived = 1;
+}
+
+// include the library:
+#include <spartan-edge-esp32-boot.h>
+#include "ESP32IniFile.h"
+
+// initialize the spartan_edge_esp32_boot library
+spartan_edge_esp32_boot esp32Cla;
+
+const size_t bufferLen = 80;
+char buffer[bufferLen];
+char buffer1[bufferLen];
+// the setup routine runs once when you press reset:
+
+int16_t re()
+{  
+  int16_t *x;
+  uint8_t da[2];
+  SeaTrans.read(2, da,2 );
+  x=(int16_t*)da;
+  return *x;
+}
+int wave(int16_t y)
+{
+  int16_t t=re();
+  if(t>y)
+  return 1;
+  else if(t<y)
+  return 2;
+  else
+  return 0;
+}
+void setup()
+{
+  // initialization 
+  esp32Cla.begin();
+
+  // check the .ini file exist or not
+  const char *filename = "/board_config.ini";
+  IniFile ini(filename);
+  if (!ini.open()) {
+    Serial.print("Ini file ");
+    Serial.print(filename);
+    Serial.println(" does not exist");
+    return;
+  }
+  Serial.println("Ini file exists");
+
+  // check the .ini file valid or not
+  if (!ini.validate(buffer, bufferLen)) {
+    Serial.print("ini file ");
+    Serial.print(ini.getFilename());
+    Serial.print(" not valid: ");
+    return;
+  }
+
+  // Fetch a value from a key which is present
+  if (ini.getValue("Overlay_List_Info", "Overlay_Dir", buffer, bufferLen)) {
+    Serial.print("section 'Overlay_List_Info' has an entry 'Overlay_Dir' with value ");
+    Serial.println(buffer);
+  }
+  else {
+    Serial.print("Could not read 'Overlay_List_Info' from section 'Overlay_Dir', error was ");
+  }
+
+  // Fetch a value from a key which is present
+  if (ini.getValue("Board_Setup", "overlay_on_boot", buffer1, bufferLen)) {
+    Serial.print("section 'Board_Setup' has an entry 'overlay_on_boot' with value ");
+    Serial.println(buffer1);
+  }
+  else {
+    Serial.print("Could not read 'Board_Setup' from section 'overlay_on_boot', error was ");
+  }
+
+  // Splicing characters
+  strcat(buffer,buffer1);
+  
+  // XFPGA pin Initialize
+  esp32Cla.xfpgaGPIOInit();
+
+  // loading the bitstream
+  esp32Cla.xlibsSstream(buffer);
+  Serial.begin(115200);
+  SeaTrans.begin();
+  //SeaTrans.write(0, data1, 4);
+  //SeaTrans.read(0, data2, 4);
+  //Serial.printf("%d %d %d %d\r\n",data2[0],data2[1],data2[2],data2[3]);
+  delay(2000);
+
+    while (status != WL_CONNECTED)
+    {
+        Serial.print("Attempting to connect to SSID: ");
+        Serial.println(WIFI_SSID);
+        // Connect to WPA/WPA2 network. Change this line if using open or WEP network:
+        status = WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+
+        // wait 5 seconds for connection:
+        delay(5000);
+    }
+
+    Serial.println("Connected to wifi");
+
+    if(hornbill.connect(HOST_ADDRESS,CLIENT_ID,aws_root_ca_pem,certificate_pem_crt,private_pem_key)== 0)
+    {
+        Serial.println("Connected to AWS");
+        delay(1000);
+
+        if(0==hornbill.subscribe(TOPIC_NAME,mySubCallBackHandler))
+        {
+            Serial.println("Subscribe Successfully");
+        }
+        else
+        {
+            Serial.println("Subscribe Failed, Check the Thing Name and Certificates");
+            while(1);
+        }
+    }
+    else
+    {
+        Serial.println("AWS connection failed, Check the HOST Address");
+        while(1);
+    }
+
+    delay(2000);
+  
+}
+
+void loop()
+{
+  uint8_t i;
+
+  unsigned long te=millis()+10000;
+
+  int count=0;
+  int nstate=0;
+  int cstate=0;
+
+  x=re();
+  while(millis()<te)//计算十秒内摇摆次数
+  {delay(10);
+  nstate=wave(x);
+  if((nstate==1)&&(cstate!=1))
+  {count++;}
+  else if((nstate==2)&&(cstate!=2))
+ {count++;}
+  cstate=nstate;}
+        sprintf(payload,"%d",count);
+        if(hornbill.publish(TOPIC_NAME,payload) == 0)
+        {        
+            Serial.println("Publish successfully!");
+            Serial.println(count);
+        }
+        else
+        {
+            Serial.println("Publish failed!");
+        }
+    
+    msgReceived = 0;
+}
